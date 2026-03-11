@@ -1,0 +1,39 @@
+﻿## .NET
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.userprefs
+
+## Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+
+## NuGet
+**/packages/*
+*.nupkg
+**/[Pp]ackages/build/
+
+## Visual Studio / Rider
+.vs/
+.idea/
+*.rsuser
+*.DotSettings.user
+
+## Secrets - DO NOT COMMIT
+appsettings.json
+appsettings.Development.json
+appsettings.Production.json
+
+## OS Files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+## Logs
+*.log
+logs/

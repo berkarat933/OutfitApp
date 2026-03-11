@@ -1,0 +1,746 @@
+﻿<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OutfitApp</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #f4f5f7; min-height: 100vh; display: flex; }
+
+        /* ─── Sidebar ─── */
+        .sidebar {
+            width: 260px; background: #1e1e2d; color: #a2a3b7; min-height: 100vh;
+            display: flex; flex-direction: column; position: fixed; left: 0; top: 0; bottom: 0; z-index: 100;
+            transition: transform 0.3s;
+        }
+        .sidebar-brand {
+            padding: 24px 20px; display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.06);
+        }
+        .sidebar-brand .logo { font-size: 28px; }
+        .sidebar-brand h2 { color: white; font-size: 18px; font-weight: 700; }
+        .sidebar-brand span { color: #7c4dff; }
+
+        .sidebar-nav { flex: 1; padding: 16px 0; }
+        .nav-section { padding: 0 20px; margin-bottom: 8px; font-size: 10px; text-transform: uppercase;
+            letter-spacing: 1.5px; color: #5a5b75; font-weight: 600; margin-top: 16px; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px; padding: 11px 20px; cursor: pointer;
+            transition: all 0.2s; font-size: 14px; font-weight: 500; color: #a2a3b7;
+            border-left: 3px solid transparent; text-decoration: none;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.04); color: #d1d1e0; }
+        .nav-item.active { background: rgba(124,77,255,0.1); color: #7c4dff; border-left-color: #7c4dff; }
+        .nav-item .icon { font-size: 18px; width: 24px; text-align: center; }
+        .nav-item .badge {
+            margin-left: auto; background: #7c4dff; color: white; font-size: 10px;
+            padding: 2px 8px; border-radius: 10px; font-weight: 600;
+        }
+
+        .sidebar-user {
+            padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06);
+            display: flex; align-items: center; gap: 12px;
+        }
+        .sidebar-user .avatar {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, #7c4dff, #b47cff); display: flex;
+            align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;
+        }
+        .sidebar-user .user-info { flex: 1; }
+        .sidebar-user .user-name { color: #e0e0e0; font-size: 13px; font-weight: 600; }
+        .sidebar-user .user-email { color: #5a5b75; font-size: 11px; }
+
+        /* ─── Main Content ─── */
+        .main { margin-left: 260px; flex: 1; min-height: 100vh; }
+
+        .topbar {
+            background: white; padding: 16px 32px; display: flex; align-items: center;
+            justify-content: space-between; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 50;
+        }
+        .topbar h1 { font-size: 20px; color: #1e1e2d; font-weight: 700; }
+        .topbar .breadcrumb { font-size: 12px; color: #aaa; margin-top: 2px; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-btn {
+            padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s;
+        }
+        .topbar-btn.primary { background: #7c4dff; color: white; }
+        .topbar-btn.primary:hover { background: #6a3de8; }
+        .hamburger {
+            display: none; background: none; border: none; font-size: 24px; cursor: pointer; color: #333;
+        }
+
+        .page-content { padding: 28px 32px; }
+
+        /* ─── Page: hidden by default ─── */
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ─── Upload Area ─── */
+        .upload-area {
+            border: 2px dashed #d0d5dd; border-radius: 14px; padding: 40px 20px;
+            text-align: center; cursor: pointer; transition: all 0.3s; background: #fafbfc; margin-bottom: 20px;
+        }
+        .upload-area:hover, .upload-area.dragover { background: #f0f0ff; border-color: #7c4dff; }
+        .upload-area .icon { font-size: 40px; margin-bottom: 10px; }
+        .upload-area p { color: #666; font-size: 14px; }
+        .upload-area .formats { color: #bbb; font-size: 11px; margin-top: 6px; }
+        #fileInput { display: none; }
+
+        .btn {
+            padding: 10px 24px; background: #7c4dff; color: white; border: none; border-radius: 8px;
+            font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.2s; width: 100%; margin-top: 8px;
+        }
+        .btn:hover { background: #6a3de8; }
+        .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+        .btn-success { background: #22c55e; }
+        .btn-success:hover { background: #16a34a; }
+        .btn-danger { background: #ef4444; }
+        .btn-danger:hover { background: #dc2626; }
+        .btn-row { display: flex; gap: 10px; margin-top: 14px; }
+        .btn-row .btn { flex: 1; }
+
+        .preview-container {
+            display: flex; align-items: center; gap: 14px;
+            margin: 16px 0; padding: 14px; background: #fafbfc; border-radius: 10px; border: 1px solid #eee;
+        }
+        .preview-container img { width: 64px; height: 64px; object-fit: cover; border-radius: 8px; }
+        .preview-info { flex: 1; }
+        .preview-info .name { font-weight: 600; color: #333; font-size: 13px; }
+        .preview-info .size { color: #aaa; font-size: 11px; }
+        .preview-container .remove-btn {
+            background: #fee2e2; color: #dc2626; border: none; border-radius: 6px;
+            padding: 6px 12px; cursor: pointer; font-size: 11px; font-weight: 600;
+        }
+
+        .status { text-align: center; padding: 12px; border-radius: 8px; margin-top: 12px; font-size: 13px; display: none; }
+        .status.success { display: block; background: #ecfdf5; color: #065f46; border: 1px solid #a7f3d0; }
+        .status.error { display: block; background: #fef2f2; color: #991b1b; border: 1px solid #fecaca; }
+        .status.loading { display: block; background: #fffbeb; color: #92400e; border: 1px solid #fde68a; }
+
+        /* ─── Edit Form ─── */
+        .edit-form {
+            display: none; margin-top: 20px; padding: 24px;
+            background: white; border-radius: 14px; border: 1px solid #eee; box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .edit-form.show { display: block; }
+        .edit-form h3 { color: #333; margin-bottom: 20px; font-size: 16px; font-weight: 600; }
+
+        .edit-form-content { display: flex; gap: 24px; }
+        .edit-form-image { flex-shrink: 0; }
+        .edit-form-image img {
+            width: 200px; height: 250px; object-fit: cover; border-radius: 12px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.08);
+        }
+        .edit-form-fields { flex: 1; }
+
+        .field { margin-bottom: 16px; }
+        .field label {
+            display: block; font-size: 11px; font-weight: 600; color: #999;
+            margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.8px;
+        }
+        .field input {
+            width: 100%; padding: 9px 12px; border: 1.5px solid #e5e7eb;
+            border-radius: 8px; font-size: 13px; outline: none; background: white; transition: border-color 0.2s;
+        }
+        .field input:focus { border-color: #7c4dff; box-shadow: 0 0 0 3px rgba(124,77,255,0.06); }
+        .ai-badge {
+            display: inline-block; font-size: 9px; background: #7c4dff; color: white;
+            padding: 2px 6px; border-radius: 6px; margin-left: 4px; vertical-align: middle;
+        }
+        .field-row { display: flex; gap: 12px; }
+        .field-row .field { flex: 1; }
+
+        /* ─── Tags ─── */
+        .tag-group-wrapper { position: relative; }
+        .tag-group { display: flex; flex-wrap: wrap; gap: 5px; overflow: hidden; transition: max-height 0.3s; }
+        .tag-group.collapsed { max-height: 36px; }
+        .tag-group.expanded { max-height: 500px; }
+
+        .tag-option {
+            padding: 5px 12px; border-radius: 16px; font-size: 11px; font-weight: 500;
+            cursor: pointer; border: 1.5px solid #e5e7eb; background: white; color: #888;
+            transition: all 0.15s; user-select: none; white-space: nowrap;
+        }
+        .tag-option:hover { border-color: #c4b5fd; color: #555; background: #faf5ff; }
+        .tag-option.selected { border-color: transparent; color: white; box-shadow: 0 1px 4px rgba(0,0,0,0.1); }
+
+        .tags-category .tag-option.selected { background: #5c6bc0; }
+        .tags-season .tag-option.selected { background: #ef6c00; }
+        .tags-material .tag-option.selected { background: #c2185b; }
+        .tags-pattern .tag-option.selected { background: #1565c0; }
+        .tags-style .tag-option.selected { background: #7b1fa2; }
+        .tags-fit .tag-option.selected { background: #00796b; }
+        .tags-occasion .tag-option.selected { background: #e65100; }
+
+        .toggle-more {
+            display: inline-block; margin-top: 4px; font-size: 11px; color: #7c4dff;
+            cursor: pointer; font-weight: 600; border: none; background: none; padding: 2px 6px;
+        }
+        .toggle-more:hover { text-decoration: underline; }
+
+        /* ─── Stats Cards ─── */
+        .stats-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .stat-card {
+            background: white; border-radius: 12px; padding: 20px; border: 1px solid #eee;
+            display: flex; align-items: center; gap: 14px;
+        }
+        .stat-card .stat-icon {
+            width: 44px; height: 44px; border-radius: 10px; display: flex;
+            align-items: center; justify-content: center; font-size: 20px;
+        }
+        .stat-card .stat-icon.purple { background: #ede9fe; }
+        .stat-card .stat-icon.blue { background: #dbeafe; }
+        .stat-card .stat-icon.green { background: #dcfce7; }
+        .stat-card .stat-icon.orange { background: #ffedd5; }
+        .stat-card .stat-value { font-size: 22px; font-weight: 700; color: #1e1e2d; }
+        .stat-card .stat-label { font-size: 12px; color: #999; }
+
+        /* ─── Filter ─── */
+        .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+        .section-header h2 { font-size: 16px; color: #333; font-weight: 600; }
+        .filter-bar { display: flex; gap: 8px; flex-wrap: wrap; }
+        .filter-bar select {
+            padding: 7px 12px; border: 1.5px solid #e5e7eb; border-radius: 8px;
+            font-size: 12px; background: white; cursor: pointer; outline: none; color: #555;
+        }
+        .filter-bar select:focus { border-color: #7c4dff; }
+
+        /* ─── Gallery ─── */
+        .gallery-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 16px;
+        }
+        .clothing-card {
+            border-radius: 12px; overflow: hidden; background: white; transition: all 0.2s;
+            border: 1px solid #eee;
+        }
+        .clothing-card:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(0,0,0,0.06); }
+        .clothing-card img { width: 100%; height: 220px; object-fit: cover; }
+        .clothing-card .card-body { padding: 14px; }
+        .clothing-card .card-name { font-weight: 600; color: #333; font-size: 13px; margin-bottom: 8px; }
+        .clothing-card .card-tags { display: flex; flex-wrap: wrap; gap: 3px; }
+        .clothing-card .card-tag {
+            padding: 2px 8px; border-radius: 10px; font-size: 9px; font-weight: 600; letter-spacing: 0.2px;
+        }
+        .tc-category { background: #e8eaf6; color: #3949ab; }
+        .tc-color { background: #e8f5e9; color: #2e7d32; }
+        .tc-season { background: #fff3e0; color: #e65100; }
+        .tc-material { background: #fce4ec; color: #ad1457; }
+        .tc-pattern { background: #e3f2fd; color: #1565c0; }
+        .tc-style { background: #f3e5f5; color: #7b1fa2; }
+        .tc-fit { background: #e0f2f1; color: #00695c; }
+        .tc-occasion { background: #fff8e1; color: #e65100; }
+        .tc-brand { background: #263238; color: #eceff1; }
+        .clothing-card .delete-btn {
+            margin-top: 8px; background: none; border: 1px solid #fca5a5; color: #ef4444;
+            border-radius: 6px; padding: 4px 10px; font-size: 10px; cursor: pointer; width: 100%;
+            font-weight: 600; transition: all 0.2s;
+        }
+        .clothing-card .delete-btn:hover { background: #ef4444; color: white; border-color: #ef4444; }
+        .empty-state { text-align: center; color: #bbb; padding: 60px 20px; font-size: 14px; grid-column: 1 / -1; }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+        .spinner {
+            display: inline-block; width: 16px; height: 16px;
+            border: 2px solid #e5e7eb; border-top: 2px solid #7c4dff;
+            border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; margin-right: 6px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── Coming Soon Page ─── */
+        .coming-soon {
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            min-height: 60vh; color: #bbb; text-align: center;
+        }
+        .coming-soon .cs-icon { font-size: 64px; margin-bottom: 16px; }
+        .coming-soon h2 { color: #555; font-size: 22px; margin-bottom: 8px; }
+        .coming-soon p { font-size: 14px; max-width: 400px; }
+
+        /* ─── Mobile ─── */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
+        .overlay.show { display: block; }
+
+        @media (max-width: 768px) {
+            .sidebar { transform: translateX(-100%); }
+            .sidebar.open { transform: translateX(0); }
+            .main { margin-left: 0; }
+            .hamburger { display: block; }
+            .page-content { padding: 20px 16px; }
+            .topbar { padding: 12px 16px; }
+            .edit-form-content { flex-direction: column; }
+            .edit-form-image img { width: 100%; height: auto; }
+            .field-row { flex-direction: column; }
+            .stats-row { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-brand">
+            <span class="logo">👗</span>
+            <h2>Outfit<span>App</span></h2>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section">Ana Menü</div>
+            <a class="nav-item active" onclick="navigateTo('wardrobe')" data-page="wardrobe">
+                <span class="icon">📂</span> Dolabım
+                <span class="badge" id="itemCountBadge">0</span>
+            </a>
+            <a class="nav-item" onclick="navigateTo('upload')" data-page="upload">
+                <span class="icon">📸</span> Kıyafet Ekle
+            </a>
+            <a class="nav-item" onclick="navigateTo('outfits')" data-page="outfits">
+                <span class="icon">👔</span> Kombinlerim
+            </a>
+
+            <div class="nav-section">Keşfet</div>
+            <a class="nav-item" onclick="navigateTo('suggest')" data-page="suggest">
+                <span class="icon">🤖</span> AI Kombin Önerisi
+            </a>
+            <a class="nav-item" onclick="navigateTo('calendar')" data-page="calendar">
+                <span class="icon">📅</span> Takvim
+            </a>
+
+            <div class="nav-section">Hesap</div>
+            <a class="nav-item" onclick="navigateTo('profile')" data-page="profile">
+                <span class="icon">👤</span> Profil
+            </a>
+            <a class="nav-item" onclick="navigateTo('settings')" data-page="settings">
+                <span class="icon">⚙️</span> Ayarlar
+            </a>
+        </nav>
+
+        <div class="sidebar-user">
+            <div class="avatar">B</div>
+            <div class="user-info">
+                <div class="user-name">Berk</div>
+                <div class="user-email">berk@outfitapp.com</div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="overlay" id="overlay" onclick="closeSidebar()"></div>
+
+    <!-- Main -->
+    <div class="main">
+        <div class="topbar">
+            <div>
+                <button class="hamburger" onclick="toggleSidebar()">☰</button>
+                <h1 id="pageTitle">Dolabım</h1>
+                <div class="breadcrumb" id="breadcrumb">Ana Sayfa / Dolabım</div>
+            </div>
+            <div class="topbar-right">
+                <button class="topbar-btn primary" onclick="navigateTo('upload')">+ Kıyafet Ekle</button>
+            </div>
+        </div>
+
+        <div class="page-content">
+            <!-- ══════ PAGE: WARDROBE ══════ -->
+            <div class="page active" id="page-wardrobe">
+                <div class="stats-row" id="statsRow">
+                    <div class="stat-card">
+                        <div class="stat-icon purple">👕</div>
+                        <div><div class="stat-value" id="statTotal">0</div><div class="stat-label">Toplam Kıyafet</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon blue">👟</div>
+                        <div><div class="stat-value" id="statShoes">0</div><div class="stat-label">Ayakkabı</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon green">🧥</div>
+                        <div><div class="stat-value" id="statOuterwear">0</div><div class="stat-label">Dış Giyim</div></div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon orange">👔</div>
+                        <div><div class="stat-value" id="statOutfits">0</div><div class="stat-label">Kombin</div></div>
+                    </div>
+                </div>
+
+                <div class="section-header">
+                    <h2>Kıyafetlerim</h2>
+                    <div class="filter-bar">
+                        <select id="filterCategory" onchange="loadWardrobe()"><option value="">Tüm Kategoriler</option></select>
+                        <select id="filterSeason" onchange="loadWardrobe()"><option value="">Tüm Mevsimler</option></select>
+                        <select id="filterStyle" onchange="loadWardrobe()"><option value="">Tüm Stiller</option></select>
+                    </div>
+                </div>
+                <div class="gallery-grid" id="galleryGrid">
+                    <div class="empty-state">
+                        <div class="empty-icon">👗</div>
+                        Henüz kıyafet eklenmedi.<br>
+                        <span style="color:#7c4dff;cursor:pointer;font-weight:600" onclick="navigateTo('upload')">İlk kıyafetini ekle →</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════ PAGE: UPLOAD ══════ -->
+            <div class="page" id="page-upload">
+                <div class="upload-area" id="uploadArea">
+                    <div class="icon">📸</div>
+                    <p>Fotoğrafı buraya sürükle veya tıkla</p>
+                    <p class="formats">JPG, PNG, WebP, GIF • Maks. 10 MB</p>
+                </div>
+                <input type="file" id="fileInput" accept=".jpg,.jpeg,.png,.webp,.gif" />
+
+                <div id="previewContainer" class="preview-container" style="display:none;">
+                    <img id="previewImg" src="" alt="Preview" />
+                    <div class="preview-info">
+                        <div class="name" id="previewName"></div>
+                        <div class="size" id="previewSize"></div>
+                    </div>
+                    <button class="remove-btn" onclick="clearSelection()">✕ Kaldır</button>
+                </div>
+
+                <button class="btn" id="analyzeBtn" disabled>🤖 AI ile Analiz Et</button>
+                <div class="status" id="status"></div>
+
+                <!-- Editable Tag Form -->
+                <div class="edit-form" id="editForm">
+                    <h3>🤖 AI Önerisi — Düzenle & Kaydet</h3>
+                    <div class="edit-form-content">
+                        <div class="edit-form-image">
+                            <img id="editImg" src="" alt="Clothing" />
+                        </div>
+                        <div class="edit-form-fields">
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>İsim <span class="ai-badge">AI</span></label>
+                                    <input type="text" id="editName" />
+                                </div>
+                                <div class="field">
+                                    <label>Marka <span class="ai-badge">AI</span></label>
+                                    <input type="text" id="editBrand" placeholder="Opsiyonel" />
+                                </div>
+                            </div>
+                            <div class="field-row">
+                                <div class="field">
+                                    <label>Ana Renk <span class="ai-badge">AI</span></label>
+                                    <input type="text" id="editColor" />
+                                </div>
+                                <div class="field">
+                                    <label>İkincil Renk</label>
+                                    <input type="text" id="editSecondaryColor" placeholder="Opsiyonel" />
+                                </div>
+                            </div>
+                            <div class="field" id="field_category"></div>
+                            <div class="field" id="field_season"></div>
+                            <div class="field" id="field_material"></div>
+                            <div class="field" id="field_pattern"></div>
+                            <div class="field" id="field_style"></div>
+                            <div class="field" id="field_fit"></div>
+                            <div class="field" id="field_occasion"></div>
+                        </div>
+                    </div>
+                    <div class="btn-row">
+                        <button class="btn btn-success" id="saveBtn">💾 Dolaba Kaydet</button>
+                        <button class="btn btn-danger" id="cancelBtn">✕ İptal</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ══════ PAGE: OUTFITS ══════ -->
+            <div class="page" id="page-outfits">
+                <div class="coming-soon">
+                    <div class="cs-icon">👔</div>
+                    <h2>Kombinlerim</h2>
+                    <p>Dolabındaki kıyafetleri bir araya getirip kombinler oluşturabileceksin. Yakında aktif olacak!</p>
+                </div>
+            </div>
+
+            <!-- ══════ PAGE: AI SUGGEST ══════ -->
+            <div class="page" id="page-suggest">
+                <div class="coming-soon">
+                    <div class="cs-icon">🤖</div>
+                    <h2>AI Kombin Önerisi</h2>
+                    <p>AI, dolabındaki kıyafetlere bakarak sana mevsime, ortama ve stiline uygun kombin önerileri sunacak. Yakında aktif olacak!</p>
+                </div>
+            </div>
+
+            <!-- ══════ PAGE: CALENDAR ══════ -->
+            <div class="page" id="page-calendar">
+                <div class="coming-soon">
+                    <div class="cs-icon">📅</div>
+                    <h2>Kombin Takvimi</h2>
+                    <p>Hangi gün ne giydiğini takip edebilecek, tekrar etmemeyi planlayabileceksin. Yakında aktif olacak!</p>
+                </div>
+            </div>
+
+            <!-- ══════ PAGE: PROFILE ══════ -->
+            <div class="page" id="page-profile">
+                <div class="coming-soon">
+                    <div class="cs-icon">👤</div>
+                    <h2>Profil</h2>
+                    <p>Stil tercihlerini, beden bilgilerini ve favori renklerini burada belirleyebileceksin. Yakında aktif olacak!</p>
+                </div>
+            </div>
+
+            <!-- ══════ PAGE: SETTINGS ══════ -->
+            <div class="page" id="page-settings">
+                <div class="coming-soon">
+                    <div class="cs-icon">⚙️</div>
+                    <h2>Ayarlar</h2>
+                    <p>Uygulama ayarları, bildirimler ve tema seçenekleri burada olacak. Yakında aktif olacak!</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ─── Enums ───
+        const enums = {
+            category: ["TShirt","Shirt","Blouse","Sweater","Hoodie","Polo","Cardigan","Vest","Jeans","Trousers","Shorts","Skirt","Leggings","Sweatpants","Chinos","Jacket","Coat","Blazer","Parka","Puffer","Trench","Dress","Jumpsuit","Sneakers","Boots","Sandals","Heels","Loafers","Hat","Cap","Scarf","Belt","Sunglasses","Bag","Backpack","Sportswear","Suit","Other"],
+            season: ["Spring","Summer","Autumn","Winter","SpringSummer","AutumnWinter","AllSeasons"],
+            material: ["Cotton","Polyester","Denim","Leather","Wool","Silk","Linen","Nylon","Cashmere","Velvet","Suede","Satin","Fleece","Canvas","Knit","Synthetic","Mixed","Unknown"],
+            pattern: ["Solid","Striped","Plaid","Checkered","Floral","Polka","Graphic","Camouflage","Animal","Geometric","Abstract","Paisley","Embroidered","Logo","Other"],
+            style: ["Casual","Formal","Business","Sporty","Streetwear","Bohemian","Vintage","Classic","Minimalist","Elegant","Grunge","Preppy","Chic","Athleisure","Punk","Romantic","Military","Other"],
+            fit: ["SlimFit","RegularFit","Oversized","Relaxed","Skinny","Loose","Tailored","Cropped","Baggy","Fitted","Unknown"],
+            occasion: ["Casual","Business","Special","Sport","Party","Wedding","Date","Travel","Beach","Outdoor","Home","Workout","Interview","Formal","Festival","Everyday"]
+        };
+
+        const tagConfig = {
+            category:  { label: "Kategori", multi: false, cssClass: "tags-category", initShow: 8 },
+            season:    { label: "Mevsim",   multi: true,  cssClass: "tags-season",   initShow: 7 },
+            material:  { label: "Materyal", multi: true,  cssClass: "tags-material", initShow: 6 },
+            pattern:   { label: "Desen",    multi: false, cssClass: "tags-pattern",  initShow: 6 },
+            style:     { label: "Stil",     multi: true,  cssClass: "tags-style",    initShow: 6 },
+            fit:       { label: "Kalıp",    multi: false, cssClass: "tags-fit",      initShow: 6 },
+            occasion:  { label: "Ortam",    multi: true,  cssClass: "tags-occasion", initShow: 6 }
+        };
+
+        const pageTitles = {
+            wardrobe: { title: "Dolabım", crumb: "Ana Sayfa / Dolabım" },
+            upload:   { title: "Kıyafet Ekle", crumb: "Ana Sayfa / Kıyafet Ekle" },
+            outfits:  { title: "Kombinlerim", crumb: "Ana Sayfa / Kombinlerim" },
+            suggest:  { title: "AI Kombin Önerisi", crumb: "Keşfet / AI Önerisi" },
+            calendar: { title: "Takvim", crumb: "Keşfet / Takvim" },
+            profile:  { title: "Profil", crumb: "Hesap / Profil" },
+            settings: { title: "Ayarlar", crumb: "Hesap / Ayarlar" }
+        };
+
+        // ─── Navigation ───
+        function navigateTo(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`page-${pageId}`).classList.add('active');
+            const navItem = document.querySelector(`.nav-item[data-page="${pageId}"]`);
+            if (navItem) navItem.classList.add('active');
+            const info = pageTitles[pageId] || { title: pageId, crumb: '' };
+            document.getElementById('pageTitle').textContent = info.title;
+            document.getElementById('breadcrumb').textContent = info.crumb;
+            closeSidebar();
+            if (pageId === 'wardrobe') loadWardrobe();
+        }
+
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.getElementById('overlay').classList.toggle('show');
+        }
+        function closeSidebar() {
+            document.getElementById('sidebar').classList.remove('open');
+            document.getElementById('overlay').classList.remove('show');
+        }
+
+        // ─── Tags ───
+        function buildTagField(fieldKey, values, selected) {
+            const cfg = tagConfig[fieldKey];
+            const container = document.getElementById(`field_${fieldKey}`);
+            const selectedArr = Array.isArray(selected) ? selected : [selected];
+            const needsToggle = values.length > cfg.initShow;
+            let html = `<label>${cfg.label} <span class="ai-badge">AI</span>`;
+            if (cfg.multi) html += ` <small style="color:#ccc;text-transform:none;letter-spacing:0;font-weight:400">birden fazla seçebilirsin</small>`;
+            html += `</label><div class="tag-group-wrapper">`;
+            html += `<div class="tag-group ${cfg.cssClass} ${needsToggle ? 'collapsed' : 'expanded'}" id="tags_${fieldKey}">`;
+            html += values.map(v => {
+                const sel = selectedArr.includes(v) ? 'selected' : '';
+                return `<span class="tag-option ${sel}" data-value="${v}" onclick="toggleTag(this,'${fieldKey}')">${v}</span>`;
+            }).join('');
+            html += `</div>`;
+            if (needsToggle) html += `<button class="toggle-more" onclick="toggleExpand('tags_${fieldKey}', this)">Daha fazla göster ▼</button>`;
+            html += `</div>`;
+            container.innerHTML = html;
+        }
+
+        function toggleExpand(groupId, btn) {
+            const g = document.getElementById(groupId);
+            if (g.classList.contains('collapsed')) { g.classList.replace('collapsed','expanded'); btn.textContent = 'Daha az göster ▲'; }
+            else { g.classList.replace('expanded','collapsed'); btn.textContent = 'Daha fazla göster ▼'; }
+        }
+
+        function toggleTag(el, fieldKey) {
+            if (tagConfig[fieldKey].multi) { el.classList.toggle('selected'); }
+            else { el.parentElement.querySelectorAll('.tag-option').forEach(t => t.classList.remove('selected')); el.classList.add('selected'); }
+        }
+
+        function getSelectedTags(fieldKey) {
+            return Array.from(document.getElementById(`tags_${fieldKey}`).querySelectorAll('.tag-option.selected')).map(t => t.dataset.value);
+        }
+
+        // ─── Filters ───
+        function populateFilters() {
+            document.getElementById('filterCategory').innerHTML = '<option value="">Tüm Kategoriler</option>' + enums.category.map(v => `<option value="${v}">${v}</option>`).join('');
+            document.getElementById('filterSeason').innerHTML = '<option value="">Tüm Mevsimler</option>' + enums.season.map(v => `<option value="${v}">${v}</option>`).join('');
+            document.getElementById('filterStyle').innerHTML = '<option value="">Tüm Stiller</option>' + enums.style.map(v => `<option value="${v}">${v}</option>`).join('');
+        }
+        populateFilters();
+
+        // ─── DOM ───
+        const uploadArea = document.getElementById('uploadArea');
+        const fileInput = document.getElementById('fileInput');
+        const previewContainer = document.getElementById('previewContainer');
+        const previewImg = document.getElementById('previewImg');
+        const previewName = document.getElementById('previewName');
+        const previewSize = document.getElementById('previewSize');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const status = document.getElementById('status');
+        const editForm = document.getElementById('editForm');
+        const editImg = document.getElementById('editImg');
+        const saveBtn = document.getElementById('saveBtn');
+        const cancelBtn = document.getElementById('cancelBtn');
+        const galleryGrid = document.getElementById('galleryGrid');
+
+        let selectedFile = null, currentImageUrl = null, currentBlobFileName = null;
+
+        uploadArea.addEventListener('click', () => fileInput.click());
+        uploadArea.addEventListener('dragover', (e) => { e.preventDefault(); uploadArea.classList.add('dragover'); });
+        uploadArea.addEventListener('dragleave', () => uploadArea.classList.remove('dragover'));
+        uploadArea.addEventListener('drop', (e) => { e.preventDefault(); uploadArea.classList.remove('dragover'); if (e.dataTransfer.files.length > 0) selectFile(e.dataTransfer.files[0]); });
+        fileInput.addEventListener('change', (e) => { if (e.target.files.length > 0) selectFile(e.target.files[0]); });
+
+        function selectFile(file) {
+            selectedFile = file;
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                previewImg.src = e.target.result; previewName.textContent = file.name;
+                previewSize.textContent = formatSize(file.size); previewContainer.style.display = 'flex';
+                analyzeBtn.disabled = false; editForm.classList.remove('show'); status.className = 'status';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function clearSelection() { selectedFile = null; previewContainer.style.display = 'none'; analyzeBtn.disabled = true; fileInput.value = ''; }
+
+        function formatSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+
+        // ─── Step 1: Analyze ───
+        analyzeBtn.addEventListener('click', async () => {
+            if (!selectedFile) return;
+            analyzeBtn.disabled = true; editForm.classList.remove('show');
+            setStatus('loading', '<span class="spinner"></span> AI analiz ediyor...');
+            try {
+                const fd = new FormData(); fd.append('file', selectedFile);
+                const res = await fetch('/api/wardrobe/analyze', { method: 'POST', body: fd });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Fail'); }
+                const data = await res.json(); currentImageUrl = data.imageUrl; currentBlobFileName = data.blobFileName;
+                const s = data.suggestion;
+                editImg.src = data.imageUrl;
+                document.getElementById('editName').value = s.name;
+                document.getElementById('editColor').value = s.color;
+                document.getElementById('editSecondaryColor').value = s.secondaryColor || '';
+                document.getElementById('editBrand').value = s.brand || '';
+                for (const key of Object.keys(tagConfig)) buildTagField(key, enums[key], s[key]);
+                editForm.classList.add('show');
+                setStatus('success', '✅ AI analiz tamamlandı! Düzenleyip kaydet.');
+                clearSelection();
+            } catch (err) { setStatus('error', `❌ ${err.message}`); analyzeBtn.disabled = false; }
+        });
+
+        // ─── Step 2: Save ───
+        saveBtn.addEventListener('click', async () => {
+            saveBtn.disabled = true; setStatus('loading', '<span class="spinner"></span> Kaydediliyor...');
+            try {
+                const body = {
+                    name: document.getElementById('editName').value,
+                    category: getSelectedTags('category').join(',') || 'Other',
+                    color: document.getElementById('editColor').value,
+                    secondaryColor: document.getElementById('editSecondaryColor').value || null,
+                    season: getSelectedTags('season').join(',') || 'AllSeasons',
+                    material: getSelectedTags('material').join(',') || 'Unknown',
+                    pattern: getSelectedTags('pattern').join(',') || 'Solid',
+                    style: getSelectedTags('style').join(',') || 'Casual',
+                    fit: getSelectedTags('fit').join(',') || 'Unknown',
+                    occasion: getSelectedTags('occasion').join(',') || 'Everyday',
+                    brand: document.getElementById('editBrand').value || null,
+                    imageUrl: currentImageUrl
+                };
+                const res = await fetch('/api/wardrobe/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Fail'); }
+                const result = await res.json();
+                setStatus('success', `✅ "${result.name}" dolabına eklendi!`);
+                editForm.classList.remove('show'); currentImageUrl = null; currentBlobFileName = null;
+                setTimeout(() => navigateTo('wardrobe'), 1500);
+            } catch (err) { setStatus('error', `❌ ${err.message}`); } finally { saveBtn.disabled = false; }
+        });
+
+        cancelBtn.addEventListener('click', async () => {
+            if (currentBlobFileName) await fetch(`/api/wardrobe/cancel/${encodeURIComponent(currentBlobFileName)}`, { method: 'DELETE' });
+            editForm.classList.remove('show'); status.className = 'status'; currentImageUrl = null; currentBlobFileName = null;
+        });
+
+        function setStatus(type, msg) { status.className = `status ${type}`; status.innerHTML = msg; }
+        function renderTags(val, cls) { return val ? val.split(',').map(v => `<span class="card-tag ${cls}">${v.trim()}</span>`).join('') : ''; }
+
+        // ─── Load Wardrobe ───
+        async function loadWardrobe() {
+            try {
+                const c = document.getElementById('filterCategory').value;
+                const s = document.getElementById('filterSeason').value;
+                const st = document.getElementById('filterStyle').value;
+                let url = '/api/wardrobe/items?';
+                if (c) url += `category=${c}&`; if (s) url += `season=${s}&`; if (st) url += `style=${st}&`;
+                const res = await fetch(url); const items = await res.json();
+
+                // Stats
+                document.getElementById('statTotal').textContent = items.length;
+                document.getElementById('itemCountBadge').textContent = items.length;
+                const shoes = ['Sneakers','Boots','Sandals','Heels','Loafers'];
+                const outer = ['Jacket','Coat','Blazer','Parka','Puffer','Trench'];
+                document.getElementById('statShoes').textContent = items.filter(i => shoes.some(s => (i.category||'').includes(s))).length;
+                document.getElementById('statOuterwear').textContent = items.filter(i => outer.some(o => (i.category||'').includes(o))).length;
+
+                if (items.length === 0) {
+                    galleryGrid.innerHTML = '<div class="empty-state"><div class="empty-icon">👗</div>Bu filtrelere uygun kıyafet bulunamadı.</div>';
+                    return;
+                }
+                galleryGrid.innerHTML = items.map(item => `
+                    <div class="clothing-card">
+                        <img src="${item.imageUrl}" alt="${item.name}" loading="lazy" />
+                        <div class="card-body">
+                            <div class="card-name">${item.name}</div>
+                            <div class="card-tags">
+                                ${renderTags(item.category, 'tc-category')}
+                                <span class="card-tag tc-color">🎨 ${item.color}${item.secondaryColor ? ' / ' + item.secondaryColor : ''}</span>
+                                ${renderTags(item.season, 'tc-season')}
+                                ${renderTags(item.material, 'tc-material')}
+                                ${renderTags(item.pattern, 'tc-pattern')}
+                                ${renderTags(item.style, 'tc-style')}
+                                ${renderTags(item.fit, 'tc-fit')}
+                                ${renderTags(item.occasion, 'tc-occasion')}
+                                ${item.brand ? `<span class="card-tag tc-brand">${item.brand}</span>` : ''}
+                            </div>
+                            <button class="delete-btn" onclick="deleteItem('${item.id}')">🗑️ Sil</button>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) { console.error(err); }
+        }
+
+        async function deleteItem(id) {
+            if (!confirm('Bu kıyafeti silmek istediğine emin misin?')) return;
+            try { await fetch(`/api/wardrobe/items/${id}`, { method: 'DELETE' }); loadWardrobe(); }
+            catch (err) { alert('Hata: ' + err.message); }
+        }
+
+        // ─── Init ───
+        loadWardrobe();
+    </script>
+</body>
+</html>
