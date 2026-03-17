@@ -15,7 +15,10 @@ public static class DependencyInjection
         string sqlConnectionString,
         string openAiEndpoint,
         string openAiApiKey,
-        string openAiDeploymentName)
+        string openAiDeploymentName,
+        string dalleEndpoint,
+        string dalleApiKey,
+        string dalleDeploymentName = "dall-e-3")
     {
         // Azure Blob Storage
         services.AddSingleton<IBlobStorageService>(
@@ -25,9 +28,23 @@ public static class DependencyInjection
         services.AddSingleton<IClothingAnalysisService>(
             new AzureOpenAIClothingAnalysisService(openAiEndpoint, openAiApiKey, openAiDeploymentName));
 
-        // EF Core + Azure SQL
+        // Azure DALL-E 3 for outfit image generation
+        services.AddSingleton<IOutfitImageService>(
+            new AzureDalleService(dalleEndpoint, dalleApiKey, dalleDeploymentName));
+
+        // Background Removal (currently disabled - Azure deprecated the API)
+        services.AddSingleton<IBackgroundRemovalService>(
+            new AzureComputerVisionService("", ""));
+
+        // EF Core + Azure SQL with retry on transient failures
         services.AddDbContext<OutfitAppDbContext>(options =>
-            options.UseSqlServer(sqlConnectionString));
+            options.UseSqlServer(sqlConnectionString, sqlOptions =>
+            {
+                sqlOptions.EnableRetryOnFailure(
+                    maxRetryCount: 5,
+                    maxRetryDelay: TimeSpan.FromSeconds(30),
+                    errorNumbersToAdd: null);
+            }));
 
         return services;
     }

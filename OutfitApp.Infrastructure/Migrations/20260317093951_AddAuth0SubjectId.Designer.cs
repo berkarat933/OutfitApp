@@ -12,8 +12,8 @@ using OutfitApp.Infrastructure.Data;
 namespace OutfitApp.Infrastructure.Migrations
 {
     [DbContext(typeof(OutfitAppDbContext))]
-    [Migration("20260311135218_StringBasedTags")]
-    partial class StringBasedTags
+    [Migration("20260317093951_AddAuth0SubjectId")]
+    partial class AddAuth0SubjectId
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -150,6 +150,10 @@ namespace OutfitApp.Infrastructure.Migrations
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Auth0SubjectId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("AvatarUrl")
                         .HasMaxLength(500)

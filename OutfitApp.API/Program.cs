@@ -1,3 +1,5 @@
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 using OutfitApp.Infrastructure;
 using Scalar.AspNetCore;
 
@@ -8,6 +10,27 @@ builder.Services.AddControllers();
 
 // OpenAPI
 builder.Services.AddOpenApi();
+
+// Auth0 Configuration
+var auth0Domain = builder.Configuration["Auth0:Domain"] ?? "dev-geqpxtl7uq7wpx6i.us.auth0.com";
+var auth0ClientId = builder.Configuration["Auth0:ClientId"] ?? "mI6dJDUNZjwsIGIEZcb903RxJAAA95zS";
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        options.Authority = $"https://{auth0Domain}/";
+        options.Audience = auth0ClientId; // ID token has ClientId as audience
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuer = true,
+            ValidateAudience = true,
+            ValidateLifetime = true,
+            ValidIssuer = $"https://{auth0Domain}/",
+            ValidAudience = auth0ClientId
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 // CORS – frontend'den erişim için
 builder.Services.AddCors(options =>
@@ -36,8 +59,14 @@ var openAiApiKey = builder.Configuration["AzureOpenAI:ApiKey"]
     ?? throw new InvalidOperationException("AzureOpenAI:ApiKey is not configured.");
 var openAiDeploymentName = builder.Configuration["AzureOpenAI:DeploymentName"] ?? "gpt-4o";
 
+// Azure DALL-E
+var dalleEndpoint = builder.Configuration["AzureDalle:Endpoint"] ?? "";
+var dalleApiKey = builder.Configuration["AzureDalle:ApiKey"] ?? "";
+var dalleDeploymentName = builder.Configuration["AzureDalle:DeploymentName"] ?? "dall-e-3";
+
 builder.Services.AddInfrastructure(blobConnectionString, blobContainerName, sqlConnectionString,
-    openAiEndpoint, openAiApiKey, openAiDeploymentName);
+    openAiEndpoint, openAiApiKey, openAiDeploymentName,
+    dalleEndpoint, dalleApiKey, dalleDeploymentName);
 
 var app = builder.Build();
 
@@ -52,6 +81,9 @@ app.MapScalarApiReference(options =>
 app.UseHttpsRedirection();
 app.UseCors();
 app.UseStaticFiles();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.MapControllers();
 

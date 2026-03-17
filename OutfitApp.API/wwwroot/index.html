@@ -5,9 +5,33 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>OutfitApp</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.auth0.com/js/auth0-spa-js/2.0/auth0-spa-js.production.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: 'Inter', 'Segoe UI', sans-serif; background: #f4f5f7; min-height: 100vh; display: flex; }
+
+        /* ─── Login Page ─── */
+        .login-page {
+            display: none; position: fixed; inset: 0; background: linear-gradient(135deg, #1e1e2d 0%, #2d2d44 100%);
+            justify-content: center; align-items: center; z-index: 1000;
+        }
+        .login-page.show { display: flex; }
+        .login-box {
+            background: white; border-radius: 20px; padding: 48px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3); max-width: 400px; width: 90%;
+        }
+        .login-box .logo { font-size: 64px; margin-bottom: 16px; }
+        .login-box h1 { font-size: 28px; color: #1e1e2d; margin-bottom: 8px; }
+        .login-box h1 span { color: #7c4dff; }
+        .login-box p { color: #888; font-size: 14px; margin-bottom: 32px; }
+        .login-btn {
+            width: 100%; padding: 14px 24px; background: #7c4dff; color: white; border: none;
+            border-radius: 10px; font-size: 16px; font-weight: 600; cursor: pointer;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 10px;
+        }
+        .login-btn:hover { background: #6a3de8; transform: translateY(-2px); }
+        .login-btn.google { background: white; color: #333; border: 2px solid #eee; margin-top: 12px; }
+        .login-btn.google:hover { border-color: #7c4dff; background: #faf5ff; }
 
         /* ─── Sidebar ─── */
         .sidebar {
@@ -42,12 +66,16 @@
 
         .sidebar-user {
             padding: 16px 20px; border-top: 1px solid rgba(255,255,255,0.06);
-            display: flex; align-items: center; gap: 12px;
+            display: flex; align-items: center; gap: 12px; cursor: pointer;
         }
+        .sidebar-user:hover { background: rgba(255,255,255,0.04); }
         .sidebar-user .avatar {
             width: 36px; height: 36px; border-radius: 10px;
             background: linear-gradient(135deg, #7c4dff, #b47cff); display: flex;
             align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 14px;
+            overflow: hidden;
+        }
+        .sidebar-user .avatar img { width: 100%; height: 100%; object-fit: cover; }
         }
         .sidebar-user .user-info { flex: 1; }
         .sidebar-user .user-name { color: #e0e0e0; font-size: 13px; font-weight: 600; }
@@ -259,6 +287,139 @@
         .coming-soon h2 { color: #555; font-size: 22px; margin-bottom: 8px; }
         .coming-soon p { font-size: 14px; max-width: 400px; }
 
+        /* ─── Suggest Page ─── */
+        .suggest-container { max-width: 1200px; }
+        .suggest-header { margin-bottom: 24px; }
+        .suggest-header h2 { font-size: 24px; color: #1e1e2d; margin-bottom: 8px; }
+        .suggest-header p { color: #888; font-size: 14px; }
+
+        .suggest-filters {
+            display: flex; gap: 16px; align-items: flex-end; flex-wrap: wrap;
+            background: white; padding: 20px; border-radius: 12px; margin-bottom: 24px;
+            border: 1px solid #eee;
+        }
+        .filter-group { display: flex; flex-direction: column; gap: 6px; }
+        .filter-group label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; }
+        .filter-group select {
+            padding: 10px 16px; border: 1.5px solid #e5e7eb; border-radius: 8px;
+            font-size: 13px; background: white; min-width: 140px; cursor: pointer;
+        }
+        .filter-group select:focus { border-color: #7c4dff; outline: none; }
+        .suggest-btn { padding: 10px 24px !important; width: auto !important; margin-top: 0 !important; }
+
+        .suggest-results { display: flex; flex-direction: column; gap: 24px; }
+
+        .outfit-card {
+            background: white; border-radius: 16px; padding: 24px;
+            border: 1px solid #eee; box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .outfit-card-header {
+            display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px;
+        }
+        .outfit-card-title { font-size: 18px; font-weight: 700; color: #1e1e2d; }
+        .outfit-card-desc { font-size: 13px; color: #888; margin-top: 4px; }
+        .outfit-card-occasion {
+            background: #7c4dff; color: white; padding: 4px 12px; border-radius: 20px;
+            font-size: 11px; font-weight: 600;
+        }
+
+        .outfit-items {
+            display: flex; gap: 16px; overflow-x: auto; padding: 8px 0;
+        }
+        .outfit-item {
+            flex-shrink: 0; width: 160px; text-align: center;
+        }
+        .outfit-item img {
+            width: 160px; height: 180px; object-fit: cover; border-radius: 12px;
+            border: 2px solid #f0f0f0; transition: all 0.2s;
+        }
+        .outfit-item img:hover { border-color: #7c4dff; transform: scale(1.02); }
+        .outfit-item .item-name {
+            font-size: 12px; font-weight: 600; color: #333; margin-top: 8px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .outfit-item .item-category {
+            font-size: 10px; color: #888; margin-top: 2px;
+        }
+        .outfit-item .item-color {
+            display: inline-block; width: 10px; height: 10px; border-radius: 50%;
+            margin-right: 4px; vertical-align: middle; border: 1px solid #ddd;
+        }
+
+        .no-suggestions {
+            text-align: center; padding: 60px 20px; color: #888;
+        }
+        .no-suggestions .ns-icon { font-size: 48px; margin-bottom: 12px; }
+
+        /* ─── Bulk Upload ─── */
+        .bulk-container { max-width: 900px; }
+        .bulk-header { margin-bottom: 20px; }
+        .bulk-header h2 { font-size: 22px; color: #1e1e2d; margin-bottom: 6px; }
+        .bulk-header p { color: #888; font-size: 13px; }
+
+        #bulkFileInput { display: none; }
+
+        .bulk-preview-container {
+            background: white; border-radius: 12px; padding: 16px; margin: 16px 0;
+            border: 1px solid #eee;
+        }
+        .bulk-preview-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid #eee;
+        }
+        .bulk-preview-header span { font-weight: 600; color: #333; }
+        .bulk-preview-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px;
+        }
+        .bulk-preview-item {
+            position: relative; border-radius: 8px; overflow: hidden; aspect-ratio: 1;
+        }
+        .bulk-preview-item img {
+            width: 100%; height: 100%; object-fit: cover;
+        }
+        .bulk-preview-item .remove-preview {
+            position: absolute; top: 4px; right: 4px; background: rgba(0,0,0,0.6);
+            color: white; border: none; border-radius: 50%; width: 20px; height: 20px;
+            cursor: pointer; font-size: 10px; display: flex; align-items: center; justify-content: center;
+        }
+        .bulk-preview-item .file-name {
+            position: absolute; bottom: 0; left: 0; right: 0; background: rgba(0,0,0,0.6);
+            color: white; font-size: 9px; padding: 3px 5px; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .bulk-results {
+            background: white; border-radius: 12px; padding: 20px; margin-top: 20px;
+            border: 1px solid #eee;
+        }
+        .bulk-results h3 { font-size: 16px; color: #333; margin-bottom: 16px; }
+        .bulk-stats { display: flex; gap: 16px; margin-bottom: 16px; }
+        .bulk-stat {
+            padding: 12px 20px; border-radius: 8px; font-weight: 600; font-size: 14px;
+        }
+        .bulk-stat.success { background: #dcfce7; color: #166534; }
+        .bulk-stat.error { background: #fee2e2; color: #991b1b; }
+        .bulk-stat span { font-size: 20px; margin-right: 6px; }
+
+        .bulk-results-list {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px;
+        }
+        .bulk-result-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px;
+            background: #f9fafb; border-radius: 8px; font-size: 12px;
+        }
+        .bulk-result-item img {
+            width: 50px; height: 50px; object-fit: cover; border-radius: 6px;
+        }
+        .bulk-result-item .result-info { flex: 1; overflow: hidden; }
+        .bulk-result-item .result-name {
+            font-weight: 600; color: #333; white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .bulk-result-item .result-category { color: #888; font-size: 11px; }
+        .bulk-result-item.error-item { background: #fef2f2; }
+        .bulk-result-item .error-msg { color: #dc2626; font-size: 11px; }
+
         /* ─── Mobile ─── */
         .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 99; }
         .overlay.show { display: block; }
@@ -278,6 +439,20 @@
     </style>
 </head>
 <body>
+    <!-- Login Page -->
+    <div class="login-page show" id="loginPage">
+        <div class="login-box">
+            <div class="logo">👗</div>
+            <h1>Outfit<span>App</span></h1>
+            <p>Dolabını yönet, AI ile kombinler oluştur</p>
+            <button class="login-btn" onclick="login()">🚀 Giriş Yap / Kayıt Ol</button>
+            <button class="login-btn google" onclick="login()">
+                <svg width="18" height="18" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+                Google ile Giriş
+            </button>
+        </div>
+    </div>
+
     <!-- Sidebar -->
     <aside class="sidebar" id="sidebar">
         <div class="sidebar-brand">
@@ -293,6 +468,9 @@
             </a>
             <a class="nav-item" onclick="navigateTo('upload')" data-page="upload">
                 <span class="icon">📸</span> Kıyafet Ekle
+            </a>
+            <a class="nav-item" onclick="navigateTo('bulk')" data-page="bulk">
+                <span class="icon">📦</span> Toplu Yükleme
             </a>
             <a class="nav-item" onclick="navigateTo('outfits')" data-page="outfits">
                 <span class="icon">👔</span> Kombinlerim
@@ -313,13 +491,16 @@
             <a class="nav-item" onclick="navigateTo('settings')" data-page="settings">
                 <span class="icon">⚙️</span> Ayarlar
             </a>
+            <a class="nav-item" onclick="logout()" style="color: #ef4444;">
+                <span class="icon">🚪</span> Çıkış Yap
+            </a>
         </nav>
 
-        <div class="sidebar-user">
-            <div class="avatar">B</div>
+        <div class="sidebar-user" id="sidebarUser" onclick="navigateTo('profile')">
+            <div class="avatar" id="userAvatar">?</div>
             <div class="user-info">
-                <div class="user-name">Berk</div>
-                <div class="user-email">berk@outfitapp.com</div>
+                <div class="user-name" id="userName">Yükleniyor...</div>
+                <div class="user-email" id="userEmail"></div>
             </div>
         </div>
     </aside>
@@ -443,6 +624,43 @@
                 </div>
             </div>
 
+            <!-- ══════ PAGE: BULK UPLOAD ══════ -->
+            <div class="page" id="page-bulk">
+                <div class="bulk-container">
+                    <div class="bulk-header">
+                        <h2>📦 Toplu Kıyafet Yükleme</h2>
+                        <p>Birden fazla kıyafet fotoğrafı seç, AI otomatik analiz edip dolabına eklesin</p>
+                    </div>
+
+                    <div class="upload-area" id="bulkUploadArea">
+                        <div class="icon">📦</div>
+                        <p>Fotoğrafları buraya sürükle veya tıkla</p>
+                        <p class="formats">JPG, PNG, WebP, GIF • Maks. 10 MB/dosya • Birden fazla seçebilirsin</p>
+                    </div>
+                    <input type="file" id="bulkFileInput" accept=".jpg,.jpeg,.png,.webp,.gif" multiple />
+
+                    <div id="bulkPreviewContainer" class="bulk-preview-container" style="display:none;">
+                        <div class="bulk-preview-header">
+                            <span id="bulkFileCount">0 dosya seçildi</span>
+                            <button class="btn btn-danger" onclick="clearBulkSelection()" style="width:auto;padding:6px 12px;font-size:12px;">✕ Temizle</button>
+                        </div>
+                        <div id="bulkPreviewGrid" class="bulk-preview-grid"></div>
+                    </div>
+
+                    <button class="btn" id="bulkUploadBtn" disabled>🚀 Tümünü Yükle & Analiz Et</button>
+                    <div class="status" id="bulkStatus"></div>
+
+                    <div id="bulkResults" class="bulk-results" style="display:none;">
+                        <h3>📊 Yükleme Sonuçları</h3>
+                        <div class="bulk-stats">
+                            <div class="bulk-stat success"><span id="bulkSuccessCount">0</span> Başarılı</div>
+                            <div class="bulk-stat error"><span id="bulkErrorCount">0</span> Hatalı</div>
+                        </div>
+                        <div id="bulkResultsList" class="bulk-results-list"></div>
+                    </div>
+                </div>
+            </div>
+
             <!-- ══════ PAGE: OUTFITS ══════ -->
             <div class="page" id="page-outfits">
                 <div class="coming-soon">
@@ -454,10 +672,52 @@
 
             <!-- ══════ PAGE: AI SUGGEST ══════ -->
             <div class="page" id="page-suggest">
-                <div class="coming-soon">
-                    <div class="cs-icon">🤖</div>
-                    <h2>AI Kombin Önerisi</h2>
-                    <p>AI, dolabındaki kıyafetlere bakarak sana mevsime, ortama ve stiline uygun kombin önerileri sunacak. Yakında aktif olacak!</p>
+                <div class="suggest-container">
+                    <div class="suggest-header">
+                        <h2>🤖 AI Kombin Önerisi</h2>
+                        <p>Dolabındaki kıyafetlere göre sana uygun kombinler önerelim</p>
+                    </div>
+
+                    <div class="suggest-filters">
+                        <div class="filter-group">
+                            <label>Ortam</label>
+                            <select id="suggestOccasion">
+                                <option value="everyday">Günlük</option>
+                                <option value="business">İş</option>
+                                <option value="casual">Rahat</option>
+                                <option value="party">Parti</option>
+                                <option value="date">Buluşma</option>
+                                <option value="sport">Spor</option>
+                                <option value="formal">Resmi</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Mevsim</label>
+                            <select id="suggestSeason">
+                                <option value="AllSeasons">Tüm Mevsimler</option>
+                                <option value="Spring">İlkbahar</option>
+                                <option value="Summer">Yaz</option>
+                                <option value="Autumn">Sonbahar</option>
+                                <option value="Winter">Kış</option>
+                            </select>
+                        </div>
+                        <div class="filter-group">
+                            <label>Stil</label>
+                            <select id="suggestStyle">
+                                <option value="any">Herhangi</option>
+                                <option value="Casual">Casual</option>
+                                <option value="Formal">Formal</option>
+                                <option value="Sporty">Sportif</option>
+                                <option value="Elegant">Şık</option>
+                                <option value="Streetwear">Sokak</option>
+                            </select>
+                        </div>
+                        <button class="btn suggest-btn" onclick="getOutfitSuggestions()">✨ Kombin Öner</button>
+                    </div>
+
+                    <div id="suggestStatus" class="status"></div>
+
+                    <div id="suggestResults" class="suggest-results"></div>
                 </div>
             </div>
 
@@ -515,12 +775,158 @@
         const pageTitles = {
             wardrobe: { title: "Dolabım", crumb: "Ana Sayfa / Dolabım" },
             upload:   { title: "Kıyafet Ekle", crumb: "Ana Sayfa / Kıyafet Ekle" },
+            bulk:     { title: "Toplu Yükleme", crumb: "Ana Sayfa / Toplu Yükleme" },
             outfits:  { title: "Kombinlerim", crumb: "Ana Sayfa / Kombinlerim" },
             suggest:  { title: "AI Kombin Önerisi", crumb: "Keşfet / AI Önerisi" },
             calendar: { title: "Takvim", crumb: "Keşfet / Takvim" },
             profile:  { title: "Profil", crumb: "Hesap / Profil" },
             settings: { title: "Ayarlar", crumb: "Hesap / Ayarlar" }
         };
+
+        // ─── Auth0 Configuration ───
+        const auth0Config = {
+            domain: 'dev-geqpxtl7uq7wpx6i.us.auth0.com',
+            clientId: 'mI6dJDUNZjwsIGIEZcb903RxJAAA95zS',
+            redirectUri: window.location.origin + '/index.html'
+        };
+
+        let auth0Client = null;
+        let accessToken = null;
+
+        // Initialize Auth0
+        async function initAuth0() {
+            try {
+                console.log('Initializing Auth0...');
+                console.log('Current URL:', window.location.href);
+                
+                auth0Client = await auth0.createAuth0Client({
+                    domain: auth0Config.domain,
+                    clientId: auth0Config.clientId,
+                    cacheLocation: 'localstorage',
+                    useRefreshTokens: true
+                });
+
+                // Handle redirect callback FIRST - check for code in URL
+                const searchParams = new URLSearchParams(window.location.search);
+                const hasCode = searchParams.has('code');
+                const hasState = searchParams.has('state');
+                
+                console.log('Has code:', hasCode, 'Has state:', hasState);
+                
+                if (hasCode && hasState) {
+                    console.log('Processing callback...');
+                    try {
+                        const result = await auth0Client.handleRedirectCallback();
+                        console.log('Callback processed successfully:', result);
+                    } catch (e) {
+                        console.error('Callback error:', e);
+                    }
+                    // Clear URL parameters
+                    window.history.replaceState({}, document.title, '/');
+                }
+                
+                // Clear error from URL
+                if (searchParams.has('error')) {
+                    console.error('Auth error:', searchParams.get('error_description'));
+                    window.history.replaceState({}, document.title, '/');
+                }
+
+                // Check if logged in
+                const isAuthenticated = await auth0Client.isAuthenticated();
+                console.log('Is authenticated:', isAuthenticated);
+                
+                if (isAuthenticated) {
+                    const user = await auth0Client.getUser();
+                    console.log('User:', user);
+                    await handleLoggedIn();
+                } else {
+                    document.getElementById('loginPage').classList.add('show');
+                }
+            } catch (err) {
+                console.error('Auth0 init error:', err);
+                document.getElementById('loginPage').classList.add('show');
+            }
+        }
+
+        async function login() {
+            console.log('Login clicked');
+            if (!auth0Client) {
+                console.error('Auth0 client not initialized');
+                return;
+            }
+            try {
+                await auth0Client.loginWithRedirect({
+                    authorizationParams: {
+                        redirect_uri: window.location.origin + '/index.html'
+                    }
+                });
+            } catch (err) {
+                console.error('Login error:', err);
+                alert('Login error: ' + err.message);
+            }
+        }
+
+        async function logout() {
+            await auth0Client.logout({
+                logoutParams: {
+                    returnTo: window.location.origin
+                }
+            });
+        }
+
+        async function handleLoggedIn() {
+            document.getElementById('loginPage').classList.remove('show');
+            
+            // Get ID token (not access token - we're not using audience)
+            try {
+                const claims = await auth0Client.getIdTokenClaims();
+                accessToken = claims.__raw; // This is the raw JWT ID token
+                console.log('Got ID token');
+            } catch (e) {
+                console.error('Token error:', e);
+            }
+            
+            // Get user info
+            const user = await auth0Client.getUser();
+            console.log('User:', user);
+            
+            // Update UI with user info
+            document.getElementById('userName').textContent = user.name || user.email;
+            document.getElementById('userEmail').textContent = user.email || '';
+            
+            const avatarEl = document.getElementById('userAvatar');
+            if (user.picture) {
+                avatarEl.innerHTML = `<img src="${user.picture}" alt="Avatar" />`;
+            } else {
+                avatarEl.textContent = (user.name || user.email || '?')[0].toUpperCase();
+            }
+
+            // Load wardrobe
+            loadWardrobe();
+        }
+
+        // Fetch with auth token
+        async function authFetch(url, options = {}) {
+            if (!accessToken) {
+                try {
+                    const claims = await auth0Client.getIdTokenClaims();
+                    accessToken = claims.__raw;
+                } catch (e) {
+                    console.error('Failed to get token:', e);
+                    throw new Error('Not authenticated');
+                }
+            }
+            
+            const headers = {
+                ...options.headers,
+                'Authorization': `Bearer ${accessToken}`
+            };
+            
+            return fetch(url, { ...options, headers });
+        }
+
+        // Initialize on page load
+        initAuth0();
 
         // ─── Navigation ───
         function navigateTo(pageId) {
@@ -557,6 +963,7 @@
             html += `<div class="tag-group ${cfg.cssClass} ${needsToggle ? 'collapsed' : 'expanded'}" id="tags_${fieldKey}">`;
             html += values.map(v => {
                 const sel = selectedArr.includes(v) ? 'selected' : '';
+
                 return `<span class="tag-option ${sel}" data-value="${v}" onclick="toggleTag(this,'${fieldKey}')">${v}</span>`;
             }).join('');
             html += `</div>`;
@@ -637,7 +1044,7 @@
             setStatus('loading', '<span class="spinner"></span> AI analiz ediyor...');
             try {
                 const fd = new FormData(); fd.append('file', selectedFile);
-                const res = await fetch('/api/wardrobe/analyze', { method: 'POST', body: fd });
+                const res = await authFetch('/api/wardrobe/analyze', { method: 'POST', body: fd });
                 if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Fail'); }
                 const data = await res.json(); currentImageUrl = data.imageUrl; currentBlobFileName = data.blobFileName;
                 const s = data.suggestion;
@@ -669,9 +1076,10 @@
                     fit: getSelectedTags('fit').join(',') || 'Unknown',
                     occasion: getSelectedTags('occasion').join(',') || 'Everyday',
                     brand: document.getElementById('editBrand').value || null,
-                    imageUrl: currentImageUrl
+                    imageUrl: currentImageUrl,
+                    blobFileName: currentBlobFileName
                 };
-                const res = await fetch('/api/wardrobe/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                const res = await authFetch('/api/wardrobe/save', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
                 if (!res.ok) { const e = await res.json(); throw new Error(e.error || 'Fail'); }
                 const result = await res.json();
                 setStatus('success', `✅ "${result.name}" dolabına eklendi!`);
@@ -681,7 +1089,7 @@
         });
 
         cancelBtn.addEventListener('click', async () => {
-            if (currentBlobFileName) await fetch(`/api/wardrobe/cancel/${encodeURIComponent(currentBlobFileName)}`, { method: 'DELETE' });
+            if (currentBlobFileName) await authFetch(`/api/wardrobe/cancel/${encodeURIComponent(currentBlobFileName)}`, { method: 'DELETE' });
             editForm.classList.remove('show'); status.className = 'status'; currentImageUrl = null; currentBlobFileName = null;
         });
 
@@ -690,13 +1098,14 @@
 
         // ─── Load Wardrobe ───
         async function loadWardrobe() {
+            if (!accessToken) return; // Not logged in yet
             try {
                 const c = document.getElementById('filterCategory').value;
                 const s = document.getElementById('filterSeason').value;
                 const st = document.getElementById('filterStyle').value;
                 let url = '/api/wardrobe/items?';
                 if (c) url += `category=${c}&`; if (s) url += `season=${s}&`; if (st) url += `style=${st}&`;
-                const res = await fetch(url); const items = await res.json();
+                const res = await authFetch(url); const items = await res.json();
 
                 // Stats
                 document.getElementById('statTotal').textContent = items.length;
@@ -735,12 +1144,249 @@
 
         async function deleteItem(id) {
             if (!confirm('Bu kıyafeti silmek istediğine emin misin?')) return;
-            try { await fetch(`/api/wardrobe/items/${id}`, { method: 'DELETE' }); loadWardrobe(); }
+            try { await authFetch(`/api/wardrobe/items/${id}`, { method: 'DELETE' }); loadWardrobe(); }
             catch (err) { alert('Hata: ' + err.message); }
         }
 
+        // ─── AI Outfit Suggestions ───
+        async function getOutfitSuggestions() {
+            const statusEl = document.getElementById('suggestStatus');
+            const resultsEl = document.getElementById('suggestResults');
+            
+            const occasion = document.getElementById('suggestOccasion').value;
+            const season = document.getElementById('suggestSeason').value;
+            const style = document.getElementById('suggestStyle').value;
+
+            statusEl.className = 'status loading';
+            statusEl.innerHTML = '<span class="spinner"></span> AI kombin önerisi oluşturuyor...';
+            resultsEl.innerHTML = '';
+
+            try {
+                const res = await authFetch('/api/outfit/suggest', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ occasion, season, style })
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Kombin önerisi alınamadı');
+                }
+
+                const data = await res.json();
+                statusEl.className = 'status';
+                statusEl.innerHTML = '';
+
+                if (!data.suggestions || data.suggestions.length === 0) {
+                    resultsEl.innerHTML = `
+                        <div class="no-suggestions">
+                            <div class="ns-icon">😔</div>
+                            <p>Yeterli kıyafet bulunamadı. Daha fazla kıyafet ekleyerek kombin önerisi alabilirsin.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                resultsEl.innerHTML = data.suggestions.map((outfit, index) => `
+                    <div class="outfit-card">
+                        <div class="outfit-card-header">
+                            <div>
+                                <div class="outfit-card-title">${outfit.name || 'Kombin ' + (index + 1)}</div>
+                                <div class="outfit-card-desc">${outfit.description || ''}</div>
+                            </div>
+                            <span class="outfit-card-occasion">${outfit.occasion || occasion}</span>
+                        </div>
+                        <div class="outfit-items">
+                            ${outfit.items.map(item => `
+                                <div class="outfit-item">
+                                    <img src="${item.imageUrl}" alt="${item.name}" />
+                                    <div class="item-name">${item.name}</div>
+                                    <div class="item-category">
+                                        <span class="item-color" style="background-color: ${getColorCode(item.color)}"></span>
+                                        ${item.category}
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `).join('');
+
+            } catch (err) {
+                statusEl.className = 'status error';
+                statusEl.innerHTML = '❌ ' + err.message;
+            }
+        }
+
+        function getColorCode(colorName) {
+            const colors = {
+                'Black': '#000', 'White': '#fff', 'Red': '#e53935', 'Blue': '#1e88e5',
+                'Navy': '#1a237e', 'Green': '#43a047', 'Yellow': '#fdd835', 'Orange': '#fb8c00',
+                'Purple': '#8e24aa', 'Pink': '#ec407a', 'Brown': '#6d4c41', 'Gray': '#757575',
+                'Grey': '#757575', 'Beige': '#d7ccc8', 'Cream': '#fffdd0', 'Olive': '#808000',
+                'Burgundy': '#800020', 'Teal': '#008080', 'Coral': '#ff7f50', 'Mustard': '#ffdb58',
+                'Charcoal': '#36454f', 'Maroon': '#800000', 'Ivory': '#fffff0', 'Khaki': '#c3b091',
+                'Lavender': '#e6e6fa', 'Mint': '#98ff98', 'Peach': '#ffcba4', 'Rust': '#b7410e',
+                'Sage': '#bcb88a', 'Tan': '#d2b48c', 'Wine': '#722f37'
+            };
+            return colors[colorName] || '#ccc';
+        }
+
+        // ─── Bulk Upload ───
+        const bulkUploadArea = document.getElementById('bulkUploadArea');
+        const bulkFileInput = document.getElementById('bulkFileInput');
+        const bulkPreviewContainer = document.getElementById('bulkPreviewContainer');
+        const bulkPreviewGrid = document.getElementById('bulkPreviewGrid');
+        const bulkUploadBtn = document.getElementById('bulkUploadBtn');
+        const bulkStatus = document.getElementById('bulkStatus');
+        const bulkResults = document.getElementById('bulkResults');
+
+        let bulkSelectedFiles = [];
+
+        bulkUploadArea.addEventListener('click', () => bulkFileInput.click());
+        bulkUploadArea.addEventListener('dragover', (e) => { e.preventDefault(); bulkUploadArea.classList.add('dragover'); });
+        bulkUploadArea.addEventListener('dragleave', () => bulkUploadArea.classList.remove('dragover'));
+        bulkUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            bulkUploadArea.classList.remove('dragover');
+            if (e.dataTransfer.files.length > 0) {
+                addBulkFiles(Array.from(e.dataTransfer.files));
+            }
+        });
+        bulkFileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                addBulkFiles(Array.from(e.target.files));
+            }
+        });
+
+        function addBulkFiles(files) {
+            const validExtensions = ['.jpg', '.jpeg', '.png', '.webp', '.gif'];
+            files.forEach(file => {
+                const ext = '.' + file.name.split('.').pop().toLowerCase();
+                if (validExtensions.includes(ext) && file.size <= 10 * 1024 * 1024) {
+                    bulkSelectedFiles.push(file);
+                }
+            });
+            updateBulkPreview();
+        }
+
+        function updateBulkPreview() {
+            if (bulkSelectedFiles.length === 0) {
+                bulkPreviewContainer.style.display = 'none';
+                bulkUploadBtn.disabled = true;
+                return;
+            }
+
+            bulkPreviewContainer.style.display = 'block';
+            bulkUploadBtn.disabled = false;
+            document.getElementById('bulkFileCount').textContent = `${bulkSelectedFiles.length} dosya seçildi`;
+
+            bulkPreviewGrid.innerHTML = bulkSelectedFiles.map((file, index) => {
+                const url = URL.createObjectURL(file);
+                return `
+                    <div class="bulk-preview-item">
+                        <img src="${url}" alt="${file.name}" />
+                        <button class="remove-preview" onclick="removeBulkFile(${index})">✕</button>
+                        <div class="file-name">${file.name}</div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function removeBulkFile(index) {
+            bulkSelectedFiles.splice(index, 1);
+            updateBulkPreview();
+        }
+
+        function clearBulkSelection() {
+            bulkSelectedFiles = [];
+            bulkFileInput.value = '';
+            updateBulkPreview();
+            bulkResults.style.display = 'none';
+            bulkStatus.className = 'status';
+        }
+
+        bulkUploadBtn.addEventListener('click', async () => {
+            if (bulkSelectedFiles.length === 0) return;
+
+            bulkUploadBtn.disabled = true;
+            bulkStatus.className = 'status loading';
+            bulkStatus.innerHTML = `<span class="spinner"></span> ${bulkSelectedFiles.length} dosya yükleniyor ve analiz ediliyor... Bu biraz zaman alabilir.`;
+            bulkResults.style.display = 'none';
+
+            try {
+                const formData = new FormData();
+                bulkSelectedFiles.forEach(file => {
+                    formData.append('files', file);
+                });
+
+                const res = await authFetch('/api/wardrobe/bulk-upload', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.error || 'Yükleme başarısız');
+                }
+
+                const data = await res.json();
+
+                // Show results
+                bulkStatus.className = 'status success';
+                bulkStatus.innerHTML = `✅ Yükleme tamamlandı! ${data.success}/${data.total} başarılı.`;
+
+                document.getElementById('bulkSuccessCount').textContent = data.success;
+                document.getElementById('bulkErrorCount').textContent = data.failed;
+
+                let resultsHtml = '';
+
+                // Success items
+                data.items.forEach(item => {
+                    resultsHtml += `
+                        <div class="bulk-result-item">
+                            <img src="${item.imageUrl}" alt="${item.name}" />
+                            <div class="result-info">
+                                <div class="result-name">${item.name}</div>
+                                <div class="result-category">${item.category} • ${item.color}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                // Error items
+                data.errors.forEach(err => {
+                    resultsHtml += `
+                        <div class="bulk-result-item error-item">
+                            <div style="width:50px;height:50px;background:#fee2e2;border-radius:6px;display:flex;align-items:center;justify-content:center;">❌</div>
+                            <div class="result-info">
+                                <div class="result-name">${err.fileName}</div>
+                                <div class="error-msg">${err.error}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+
+                document.getElementById('bulkResultsList').innerHTML = resultsHtml;
+                bulkResults.style.display = 'block';
+
+                // Clear selection
+                bulkSelectedFiles = [];
+                bulkFileInput.value = '';
+                updateBulkPreview();
+
+                // Reload wardrobe count
+                loadWardrobe();
+
+            } catch (err) {
+                bulkStatus.className = 'status error';
+                bulkStatus.innerHTML = '❌ ' + err.message;
+            } finally {
+                bulkUploadBtn.disabled = false;
+            }
+        });
+
         // ─── Init ───
-        loadWardrobe();
+        // Auth0 initialization handles everything
     </script>
 </body>
 </html>

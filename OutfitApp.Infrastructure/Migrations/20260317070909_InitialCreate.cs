@@ -33,9 +33,16 @@ namespace OutfitApp.Infrastructure.Migrations
                     Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     UserId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Name = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
-                    Category = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    Category = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
                     Color = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
-                    Season = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: false),
+                    SecondaryColor = table.Column<string>(type: "nvarchar(50)", maxLength: 50, nullable: true),
+                    Season = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Material = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Pattern = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Style = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Fit = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Occasion = table.Column<string>(type: "nvarchar(200)", maxLength: 200, nullable: false),
+                    Brand = table.Column<string>(type: "nvarchar(100)", maxLength: 100, nullable: true),
                     ImageUrl = table.Column<string>(type: "nvarchar(1000)", maxLength: 1000, nullable: false),
                     CreatedAt = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
@@ -93,16 +100,6 @@ namespace OutfitApp.Infrastructure.Migrations
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ClothingItems_Category",
-                table: "ClothingItems",
-                column: "Category");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_ClothingItems_Season",
-                table: "ClothingItems",
-                column: "Season");
 
             migrationBuilder.CreateIndex(
                 name: "IX_ClothingItems_UserId",
